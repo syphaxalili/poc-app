@@ -5,10 +5,16 @@ const app = express();
 
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(express.json());
 
-// Connect to MongoDB and start server only if successful
+const authRoutes = require("./src/routes/authRoutes");
+const fileRoutes = require("./src/routes/fileRoutes");
+const huggingRoutes = require("./src/routes/huggingRoutes");
+
+app.use("/api/auth", authRoutes);
+app.use("/api/file", fileRoutes);
+app.use("/api", huggingRoutes);
+
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
