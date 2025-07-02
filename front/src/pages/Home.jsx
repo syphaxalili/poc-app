@@ -9,6 +9,10 @@ import {
   TextareaAutosize,
   IconButton,
   CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
@@ -32,6 +36,11 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [activeModels, setActiveModels] = useState([
+    { key: "gpt4", label: "GPT-4 (OpenAI)" },
+    { key: "dalle", label: "DALL·E (OpenAI)" },
+  ]);
+  const [selectedModel, setSelectedModel] = useState("gpt4");
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null); // Ajout d'une ref pour l'input file
   const [chatStarted, setChatStarted] = useState(false);
@@ -127,6 +136,8 @@ export default function Home() {
       <SettingsModal
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        onModelsChange={setActiveModels}
+        activeModels={activeModels}
       />
       <Box
         component="main"
@@ -143,6 +154,29 @@ export default function Home() {
           userName={userName}
           handleLogout={() => (window.location.href = "/login")}
         />
+
+        <FormControl sx={{ m: 2, minWidth: 220 }}>
+          <InputLabel id="ia-model-select-label">Modèle IA</InputLabel>
+          <Select
+            labelId="ia-model-select-label"
+            value={selectedModel}
+            label="Modèle IA"
+            onChange={(e) => setSelectedModel(e.target.value)}
+          >
+            {activeModels.map(
+              (model) =>
+                (model.enabled === undefined || model.enabled) && (
+                  <MenuItem
+                    key={model.key || model.name}
+                    value={model.key || model.name}
+                  >
+                    {model.label || `${model.name} (${model.company})`}
+                  </MenuItem>
+                )
+            )}
+          </Select>
+        </FormControl>
+
         <Container
           maxWidth={false}
           sx={{
@@ -151,7 +185,7 @@ export default function Home() {
             flexDirection: "column",
             py: 2,
             minHeight: 0,
-            width: "100%", // OK ici
+            width: "100%",
           }}
         >
           {/* Affichage d'accueil ou chat */}

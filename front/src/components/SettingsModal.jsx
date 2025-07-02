@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,7 +13,12 @@ import {
   Divider,
 } from "@mui/material";
 
-export default function SettingsModal({ open, onClose, isAdmin = true }) {
+export default function SettingsModal({
+  open,
+  onClose,
+  isAdmin = true,
+  onModelsChange,
+}) {
   // Exemple de données pré-remplies (remplace par des props ou du contexte si besoin)
   const [profile, setProfile] = useState({
     nom: "Dupont",
@@ -30,6 +35,22 @@ export default function SettingsModal({ open, onClose, isAdmin = true }) {
   const [showAddModel, setShowAddModel] = useState(false);
   const [newModel, setNewModel] = useState({ name: "", company: "" });
   const [customModels, setCustomModels] = useState([]);
+
+  useEffect(() => {
+    // Construit la liste des modèles activés
+    const modelsList = [
+      { key: "gpt4", label: "GPT-4 (OpenAI)", enabled: models.gpt4 },
+      { key: "dalle", label: "DALL·E (OpenAI)", enabled: models.dalle },
+      ...customModels.map((m) => ({
+        key: m.name,
+        label: `${m.name} (${m.company})`,
+        enabled: m.enabled,
+        name: m.name,
+        company: m.company,
+      })),
+    ];
+    onModelsChange && onModelsChange(modelsList.filter((m) => m.enabled));
+  }, [models, customModels]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth>
