@@ -1,126 +1,206 @@
-import React, { useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import {
   Box,
   Container,
   Typography,
+  Avatar,
   Paper,
-  Stack,
   Button,
+  TextareaAutosize,
+  IconButton,
+  CircularProgress,
 } from "@mui/material";
+import SendIcon from "@mui/icons-material/Send";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
-import DocumentUpload from "../components/DocumentUpload";
-import DocumentDetails from "../components/DocumentDetails";
+import ChatMessages from "../components/ChatMessages";
+import ChatInput from "../components/ChatInput";
+
+const IA_AVATAR = "🤖";
+const USER_AVATAR = "🧑";
+
+function formatTime(date) {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
 
 export default function Home() {
   const userName = "Jean Dupont";
-  const documents = [
-    {
-      name: "Contrat_ABC.pdf",
-      date: "2024-06-30",
-      summary: "Résumé du Contrat ABC...",
-      keyPoints: ["Point A", "Point B"],
-      suggestions: ["Action 1", "Action 2"],
-    },
-    {
-      name: "Rapport_XYZ.pdf",
-      date: "2024-06-28",
-      summary: "Résumé du Rapport XYZ...",
-      keyPoints: ["Point X", "Point Y"],
-      suggestions: ["Action X", "Action Y"],
-    },
-  ];
-
-  const [selectedDocIdx, setSelectedDocIdx] = useState(-1);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const chatEndRef = useRef(null);
+  const fileInputRef = useRef(null); // Ajout d'une ref pour l'input file
+  const [chatStarted, setChatStarted] = useState(false);
 
-  const handleLogout = () => {
-    window.location.href = "/login";
+  useEffect(() => {
+    if (chatStarted) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, loading, chatStarted]);
+
+  const handleSend = async () => {
+    if (!input.trim() && !selectedFile) return;
+    if (!chatStarted) setChatStarted(true);
+
+    const now = new Date();
+    // On stocke le fichier et le texte dans le message utilisateur
+    const fileForThisMessage = selectedFile;
+    const textForThisMessage = input;
+
+    let newMessages = [
+      ...messages,
+      {
+        sender: "user",
+        content: textForThisMessage,
+        file: fileForThisMessage, // <-- on stocke le fichier ici
+        time: now,
+      },
+    ];
+    setMessages(newMessages);
+    setInput("");
+    setSelectedFile(null);
+
+    // CORRECTION: Réinitialiser la valeur de l'input file
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    setLoading(true);
+
+    setTimeout(() => {
+      // On récupère le dernier message utilisateur pour la réponse IA
+      const lastUserMsg = newMessages[newMessages.length - 1];
+      setMessages([
+        ...newMessages,
+        {
+          sender: "ia",
+          content: lastUserMsg.file
+            ? `Résumé généré pour le fichier **${lastUserMsg.file.name}** :\n\n- Point clé 1\n- Point clé 2\n\nSuggestions :\n- Action 1\n- Action 2`
+            : "Voici la réponse de l'IA à votre question.",
+          time: new Date(),
+        },
+      ]);
+      setLoading(false);
+    }, 1800);
+  };
+
+  const handleInputKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
   };
 
   const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
+    if (e.target.files[0]) setSelectedFile(e.target.files[0]);
   };
 
-  const handleGenerate = () => {
-    // TODO: Envoyer le fichier au backend pour traitement
-    alert("Génération du résumé en cours...");
+  // CORRECTION: Fonction pour supprimer le fichier sélectionné
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f5f6fa" }}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "100vh",
+        bgcolor: "#f5f6fa",
+        width: "100%", // Correction ici !
+        overflowX: "hidden", // Optionnel pour forcer la suppression du scroll horizontal
+      }}
+    >
       <Sidebar
-        documents={documents}
-        selectedDocIdx={selectedDocIdx}
-        setSelectedDocIdx={setSelectedDocIdx}
+        documents={[]}
+        selectedDocIdx={-1}
+        setSelectedDocIdx={() => {}}
       />
-      <Box component="main" sx={{ flexGrow: 1, p: 0 }}>
-        <Header userName={userName} handleLogout={handleLogout} />
-        <Container maxWidth="md" sx={{ py: 8 }}>
-          {selectedDocIdx === -1 ? (
-            <Stack spacing={4} alignItems="flex-start">
-              <Box>
-                <Typography variant="h3" sx={{ fontWeight: 700 }} gutterBottom>
-                  Bienvenue dans l’assistant de synthèse de documents
-                </Typography>
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  sx={{ mb: 2, maxWidth: 600 }}
-                >
-                  Cet outil vous permet de téléverser un document PDF (contrat,
-                  rapport, norme…) et d’obtenir en quelques secondes un résumé
-                  structuré, les points clés et des suggestions d’actions
-                  générées par l’IA.
-                </Typography>
-              </Box>
-              <Box sx={{ width: "100%", maxWidth: 500 }}>
-                <Paper sx={{ p: 4, borderRadius: 3, boxShadow: 1 }}>
-                  {!selectedFile ? (
-                    <>
-                      <input
-                        type="file"
-                        accept="application/pdf"
-                        id="upload-pdf"
-                        style={{ display: "none" }}
-                        onChange={handleFileChange}
-                      />
-                      <label htmlFor="upload-pdf">
-                        <Button
-                          variant="contained"
-                          component="span"
-                          size="large"
-                          sx={{ borderRadius: 3 }}
-                        >
-                          Uploader un document PDF
-                        </Button>
-                      </label>
-                    </>
-                  ) : (
-                    <>
-                      <Typography variant="subtitle1" sx={{ mb: 2 }}>
-                        Fichier sélectionné : <b>{selectedFile.name}</b>
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        size="large"
-                        onClick={handleGenerate}
-                        sx={{
-                          borderRadius: 3,
-                          backgroundColor: "#8e24aa",
-                          "&:hover": { backgroundColor: "#6d1b7b" },
-                        }}
-                      >
-                        Générer maintenant ✨
-                      </Button>
-                    </>
-                  )}
-                </Paper>
-              </Box>
-            </Stack>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 0,
+          display: "flex",
+          flexDirection: "column",
+          height: "100vh",
+          width: "100%", // OK ici pour prendre la largeur restante
+        }}
+      >
+        <Header
+          userName={userName}
+          handleLogout={() => (window.location.href = "/login")}
+        />
+        <Container
+          maxWidth={false}
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            py: 2,
+            minHeight: 0,
+            width: "100%", // OK ici
+          }}
+        >
+          {/* Affichage d'accueil ou chat */}
+          {!chatStarted ? (
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 400,
+              }}
+            >
+              <Typography variant="h5" color="text.secondary" align="center">
+                Bienvenue dans l'assistant IA.
+                <br />
+                Posez une question ou uploadez un document pour commencer la
+                conversation.
+              </Typography>
+            </Box>
           ) : (
-            <DocumentDetails doc={documents[selectedDocIdx]} />
+            <Paper
+              sx={{
+                flex: 1,
+                mb: 2,
+                p: 0,
+                display: "flex",
+                flexDirection: "column",
+                bgcolor: "#f8f9fb",
+                borderRadius: 3,
+                boxShadow: 1,
+                minHeight: 0,
+                overflow: "hidden",
+              }}
+            >
+              <ChatMessages
+                messages={messages}
+                loading={loading}
+                chatEndRef={chatEndRef}
+                userName={userName}
+                IA_AVATAR={IA_AVATAR}
+                USER_AVATAR={USER_AVATAR}
+                formatTime={formatTime}
+              />
+            </Paper>
           )}
+          <ChatInput
+            input={input}
+            setInput={setInput}
+            handleInputKeyDown={handleInputKeyDown}
+            handleSend={handleSend}
+            loading={loading}
+            selectedFile={selectedFile}
+            handleFileChange={handleFileChange}
+            handleRemoveFile={handleRemoveFile}
+            fileInputRef={fileInputRef}
+          />
         </Container>
       </Box>
     </Box>
