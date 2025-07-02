@@ -7,8 +7,12 @@ import {
   ListItemText,
   Divider,
   Typography,
+  Box,
+  Button,
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
+import SettingsIcon from "@mui/icons-material/Settings";
+import React from "react";
 
 const drawerWidth = 240;
 
@@ -16,6 +20,7 @@ export default function Sidebar({
   documents,
   selectedDocIdx,
   setSelectedDocIdx,
+  onSettingsClick,
 }) {
   return (
     <Drawer
@@ -40,45 +45,89 @@ export default function Sidebar({
           paddingRight: 8,
         }}
       >
-        <List>
-          <ListItem
-            button
-            selected={selectedDocIdx === -1}
-            onClick={() => setSelectedDocIdx(-1)}
-          >
-            <ListItemIcon>
-              <HomeIcon color="primary" />
-            </ListItemIcon>
-            <ListItemText primary="Accueil" />
-          </ListItem>
-        </List>
-        <Divider sx={{ my: 2 }} />
-        <Typography variant="subtitle2" sx={{ pl: 2, pb: 1, color: "#888" }}>
-          Historique des fichiers
-        </Typography>
-        <List>
-          {documents.map((doc, idx) => (
-            <ListItem
-              button
-              key={doc.name}
-              selected={selectedDocIdx === idx}
-              onClick={() => setSelectedDocIdx(idx)}
-              sx={{
-                borderRadius: 1,
-                mx: 1,
-                mb: 0.5,
-                cursor: "pointer", // Ajoute cette ligne
-              }}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            justifyContent: "space-between",
+          }}
+        >
+          <div>
+            {/* Bouton Paramètres au-dessus de Accueil */}
+            <List>
+              <ListItem
+                button
+                onClick={onSettingsClick}
+                sx={{
+                  borderRadius: 1,
+                  mx: 1,
+                  mb: 0.5,
+                  cursor: "pointer",
+                  transition: "background 0.2s",
+                  "&:hover": {
+                    backgroundColor: "#f0f4fa",
+                  },
+                }}
+              >
+                <ListItemIcon>
+                  <SettingsIcon color="primary" />
+                </ListItemIcon>
+                <ListItemText primary="Paramètres" />
+              </ListItem>
+              <ListItem
+                button
+                selected={selectedDocIdx === -1}
+                onClick={() => setSelectedDocIdx(-1)}
+                sx={{
+                  borderRadius: 1,
+                  mx: 1,
+                  mb: 0.5,
+                  cursor: "pointer",
+                  transition: "background 0.2s",
+                  "&:hover": {
+                    backgroundColor: "#f0f4fa",
+                  },
+                }}
+              >
+                <ListItemIcon>
+                  <HomeIcon color="primary" />
+                </ListItemIcon>
+                <ListItemText primary="Accueil" />
+              </ListItem>
+            </List>
+            <Divider sx={{ my: 2 }} />
+            <Typography
+              variant="subtitle2"
+              sx={{ pl: 2, pb: 1, color: "#888" }}
             >
-              <ListItemText
-                primary={doc.name}
-                secondary={doc.date}
-                primaryTypographyProps={{ fontSize: 15 }}
-                secondaryTypographyProps={{ fontSize: 12, color: "#aaa" }}
-              />
-            </ListItem>
-          ))}
-        </List>
+              Historique des fichiers
+            </Typography>
+            <List>
+              {documents.map((doc, idx) => (
+                <ListItem
+                  button
+                  key={doc.name}
+                  selected={selectedDocIdx === idx}
+                  onClick={() => setSelectedDocIdx(idx)}
+                  sx={{
+                    borderRadius: 1,
+                    mx: 1,
+                    mb: 0.5,
+                    cursor: "pointer",
+                  }}
+                >
+                  <ListItemText
+                    primary={doc.name}
+                    secondary={doc.date}
+                    primaryTypographyProps={{ fontSize: 15 }}
+                    secondaryTypographyProps={{ fontSize: 12, color: "#aaa" }}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </div>
+        </Box>
       </div>
     </Drawer>
   );

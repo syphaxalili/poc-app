@@ -16,6 +16,8 @@ import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import ChatMessages from "../components/ChatMessages";
 import ChatInput from "../components/ChatInput";
+import SettingsModal from "../components/SettingsModal";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 const IA_AVATAR = "🤖";
 const USER_AVATAR = "🧑";
@@ -33,6 +35,7 @@ export default function Home() {
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null); // Ajout d'une ref pour l'input file
   const [chatStarted, setChatStarted] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (chatStarted) {
@@ -116,9 +119,14 @@ export default function Home() {
       }}
     >
       <Sidebar
+        onSettingsClick={() => setSettingsOpen(true)}
         documents={[]}
         selectedDocIdx={-1}
         setSelectedDocIdx={() => {}}
+      />
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
       />
       <Box
         component="main"
