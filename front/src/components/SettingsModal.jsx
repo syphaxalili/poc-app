@@ -16,6 +16,7 @@ import {
   DialogContentText,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { apiUrl } from "../config";
 
 export default function SettingsModal({
   open,
@@ -36,6 +37,14 @@ export default function SettingsModal({
   const [newModel, setNewModel] = useState({ name: "", company: "" });
   const [customModels, setCustomModels] = useState([]);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  const [changePwdOpen, setChangePwdOpen] = useState(false);
+  const [pwdForm, setPwdForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+  });
+  const [pwdError, setPwdError] = useState("");
+  const [pwdSuccess, setPwdSuccess] = useState("");
 
   const navigate = useNavigate();
 
@@ -115,7 +124,7 @@ export default function SettingsModal({
                 <Button
                   variant="outlined"
                   color="primary"
-                  onClick={() => setShowPasswordField(true)}
+                  onClick={() => setChangePwdOpen(true)}
                 >
                   Changer de mot de passe
                 </Button>
@@ -300,6 +309,87 @@ export default function SettingsModal({
           </Box>
         )}
       </Box>
+      <Dialog open={changePwdOpen} onClose={() => setChangePwdOpen(false)}>
+        <DialogTitle>Changer le mot de passe</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Mot de passe actuel"
+            type="password"
+            fullWidth
+            margin="normal"
+            value={pwdForm.currentPassword}
+            onChange={(e) =>
+              setPwdForm({ ...pwdForm, currentPassword: e.target.value })
+            }
+          />
+          <TextField
+            label="Nouveau mot de passe"
+            type="password"
+            fullWidth
+            margin="normal"
+            value={pwdForm.newPassword}
+            onChange={(e) =>
+              setPwdForm({ ...pwdForm, newPassword: e.target.value })
+            }
+          />
+          {pwdError && (
+            <Typography color="error" sx={{ mt: 1 }}>
+              {pwdError}
+            </Typography>
+          )}
+          {pwdSuccess && (
+            <Typography color="success.main" sx={{ mt: 1 }}>
+              {pwdSuccess}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setChangePwdOpen(false);
+              setPwdForm({ currentPassword: "", newPassword: "" });
+              setPwdError("");
+              setPwdSuccess("");
+            }}
+            color="primary"
+          >
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={async () => {
+              setPwdError("");
+              setPwdSuccess("");
+              try {
+                const res = await fetch(`${apiUrl}/api/auth/change-password`, {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                  },
+                  body: JSON.stringify(pwdForm),
+                });
+                if (res.status === 200) {
+                  setPwdSuccess("Mot de passe changé !");
+                  setTimeout(() => {
+                    setChangePwdOpen(false);
+                    setPwdForm({ currentPassword: "", newPassword: "" });
+                    setPwdSuccess("");
+                  }, 1200);
+                } else {
+                  const data = await res.json();
+                  setPwdError(data.message || "Erreur lors du changement");
+                }
+              } catch (err) {
+                setPwdError("Erreur réseau");
+              }
+            }}
+          >
+            Valider
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }
