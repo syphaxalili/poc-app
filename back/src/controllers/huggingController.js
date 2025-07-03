@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
-
-const { summarizeWithMistral } = require('../services/HuggingFaceService');
+const { summarizeWithOllama } = require('../services/HuggingFaceService');
+const File = require('../models/File');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -24,6 +24,7 @@ const fileFilter = (req, file, cb) => {
 
 exports.upload = multer({ storage, fileFilter }).single("document");
 
+// Cas 1 : Upload d'un nouveau PDF + prompt
 exports.handleUploadAndProcess = async (req, res) => {
   try {
     if (!req.file)
@@ -31,23 +32,13 @@ exports.handleUploadAndProcess = async (req, res) => {
 
     const filePath = path.resolve(req.file.path);
     const dataBuffer = fs.readFileSync(filePath);
-
     const parsed = await pdfParse(dataBuffer);
     const fullText = parsed.text;
 
-    console.log(`Texte extrait (${req.file.filename}):`, fullText.slice(0, 200));
+    const { userPrompt } = req.body;
+    let prompt = (userPrompt || "") + "\n\n" + fullText;
 
-    const prompt = `
-Voici le contenu d'un document. Merci de me fournir un résumé structuré clair avec :
-- Les points clés
-- Les suggestions d'actions
-- Un résumé bref en quelques phrases
-
-Texte :
-${fullText}
-`;
-
-    const summary = summarizeWithMistral(prompt);
+    const summary = await summarizeWithOllama(prompt);
 
     res.status(200).json({
       message: "Fichier reçu, traité et résumé généré",
@@ -57,6 +48,36 @@ ${fullText}
   } catch (err) {
     res.status(500).json({
       message: "Erreur lors du traitement du PDF",
+      error: err.message,
+    });
+  }
+};
+
+// Cas 2 : Utilisation d'un fileId existant + prompt
+exports.handleFileIdAndProcess = async (req, res) => {
+  try {
+    const { fileId, userPrompt } = req.body;
+    if (!fileId) return res.status(400).json({ message: "fileId requis" });
+
+    const file = await File.findById(fileId);
+    if (!file) return res.status(404).json({ message: "Fichier non trouvé" });
+
+    const dataBuffer = fs.readFileSync(file.path);
+    const parsed = await pdfParse(dataBuffer);
+    const fullText = parsed.text;
+
+    let prompt = (userPrompt || "") + "\n\n" + fullText;
+
+    const summary = await summarizeWithOllama(prompt);
+
+    res.status(200).json({
+      message: "Résumé généré à partir du fileId",
+      file: file.filename,
+      summary,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Erreur lors du traitement du fileId",
       error: err.message,
     });
   }

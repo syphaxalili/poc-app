@@ -2,59 +2,46 @@ const File = require('../models/File');
 const Chat = require('../models/Chat');
 const pdfParse = require('pdf-parse');
 const fs = require('fs');
-const { summarizeWithMistral } = require('../services/HuggingFaceService');
+const { summarizeWithOllama } = require('../services/HuggingFaceService');
 
 exports.askModel = async (req, res) => {
   try {
     const { fileId, userPrompt } = req.body;
-    const model = "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF";
-    const file = await File.findById(fileId);
-    if (!file) return res.status(404).json({ message: 'Fichier non trouvé' });
+    let prompt = userPrompt || "";
 
-    // Extraction du texte du PDF
-    const dataBuffer = fs.readFileSync(file.path);
-    const pdfData = await pdfParse(dataBuffer);
-    const text = pdfData.text;
-
-    // Construction du prompt final
-    const prompt = userPrompt
-      ? `${userPrompt}\n\n${text}`
-      : text;
-
-    // Appel HuggingFace/Mistral
-    let summary, keyPoints, suggestions;
-    try {
-      const result = await summarizeWithMistral(prompt);
-      summary = result.resume;
-      keyPoints = result.points_cles;
-      suggestions = result.suggestions;
-    } catch (e) {
-      return res.status(500).json({ message: "Erreur HuggingFace/Mistral", error: e.message });
+    // Si fileId fourni, on ajoute le texte du PDF au prompt
+    if (fileId) {
+      const file = await File.findById(fileId);
+      if (!file) return res.status(404).json({ message: 'Fichier non trouvé' });
+      const dataBuffer = fs.readFileSync(file.path);
+      const pdfData = await pdfParse(dataBuffer);
+      prompt += "\n\n" + pdfData.text;
     }
 
-    // Historique chat
-    const chat = await Chat.create({
+    if (!prompt.trim()) {
+      return res.status(400).json({ message: "Prompt vide" });
+    }
+
+    let iaResponse;
+    try {
+      iaResponse = await summarizeWithOllama(prompt);
+    } catch (e) {
+      return res.status(500).json({ message: "Erreur Ollama", error: e.message });
+    }
+
+    // Enregistrement dans la collection chats
+    await Chat.create({
       user: req.user.id,
-      file: file._id,
-      model,
+      file: fileId || null,
+      model: "mistral",
       messages: [
-        { role: 'user', content: userPrompt || "Résumé du PDF" },
-        { role: 'assistant', content: summary }
+        { role: 'user', content: userPrompt || "" },
+        { role: 'assistant', content: iaResponse }
       ],
-      summary,
-      keyPoints,
-      suggestions
+      createdAt: new Date()
     });
 
-    res.json({
-      message: "Réponse générée avec succès",
-      chat: {
-        id: chat._id,
-        summary,
-        keyPoints,
-        suggestions
-      }
-    });
+    res.send(`<div class="ia-response"><pre>${iaResponse}</pre></div>`);
   } catch (err) {
     res.status(500).json({ message: "Erreur lors du chat avec le modèle", error: err.message });
   }
