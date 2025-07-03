@@ -58,25 +58,6 @@ export default function Sidebar({
             <List>
               <ListItem
                 button
-                onClick={onSettingsClick}
-                sx={{
-                  borderRadius: 1,
-                  mx: 1,
-                  mb: 0.5,
-                  cursor: "pointer",
-                  transition: "background 0.2s",
-                  "&:hover": {
-                    backgroundColor: "#f0f4fa",
-                  },
-                }}
-              >
-                <ListItemIcon>
-                  <SettingsIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText primary="Paramètres" />
-              </ListItem>
-              <ListItem
-                button
                 selected={selectedDocIdx === -1}
                 onClick={() => setSelectedDocIdx(-1)}
                 sx={{
@@ -95,13 +76,32 @@ export default function Sidebar({
                 </ListItemIcon>
                 <ListItemText primary="Accueil" />
               </ListItem>
+              <ListItem
+                button
+                onClick={onSettingsClick}
+                sx={{
+                  borderRadius: 1,
+                  mx: 1,
+                  mb: 0.5,
+                  cursor: "pointer",
+                  transition: "background 0.2s",
+                  "&:hover": {
+                    backgroundColor: "#f0f4fa",
+                  },
+                }}
+              >
+                <ListItemIcon>
+                  <SettingsIcon color="primary" />
+                </ListItemIcon>
+                <ListItemText primary="Paramètres" />
+              </ListItem>
             </List>
             <Divider sx={{ my: 2 }} />
             <Typography
               variant="subtitle2"
               sx={{ pl: 2, pb: 1, color: "#888" }}
             >
-              Historique des fichiers
+              Historique des chats
             </Typography>
             <List>
               {documents.map((doc, idx) => (
