@@ -34,6 +34,7 @@ export default function Login() {
         setSuccess("Connexion réussie !");
         const data = await res.json();
         localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user)); // <-- Ajoute cette ligne
         setTimeout(() => navigate("/"), 1000);
       } else {
         const data = await res.json();

@@ -9,6 +9,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import ChatMessages from "../components/ChatMessages";
@@ -23,7 +24,11 @@ function formatTime(date) {
 }
 
 export default function Home() {
-  const userName = "Jean Dupont";
+  // Récupère l'utilisateur depuis le localStorage
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userName =
+    user.prenom && user.nom ? `${user.prenom} ${user.nom}` : "Utilisateur";
+
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -39,6 +44,7 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [chatHistory, setChatHistory] = useState([]); // [{id, name, messages, date}]
   const [selectedDocIdx, setSelectedDocIdx] = useState(-1);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (chatStarted) {
@@ -174,7 +180,11 @@ export default function Home() {
       >
         <Header
           userName={userName}
-          handleLogout={() => (window.location.href = "/login")}
+          handleLogout={() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            navigate("/login");
+          }}
         />
 
         <FormControl sx={{ m: 2, minWidth: 220 }}>
