@@ -46,6 +46,9 @@ export default function SettingsModal({
   const [pwdError, setPwdError] = useState("");
   const [pwdSuccess, setPwdSuccess] = useState("");
 
+  const [profileError, setProfileError] = useState("");
+  const [profileSuccess, setProfileSuccess] = useState("");
+
   const navigate = useNavigate();
 
   // Prend les valeurs du user si dispo, sinon valeurs par défaut
@@ -117,7 +120,6 @@ export default function SettingsModal({
               fullWidth
               margin="normal"
               type="email"
-              disabled
             />
             <Box mt={2}>
               {!showPasswordField ? (
@@ -161,8 +163,70 @@ export default function SettingsModal({
                 </Box>
               )}
             </Box>
+            {profileError && (
+              <Typography color="error" sx={{ mt: 2 }}>
+                {profileError}
+              </Typography>
+            )}
+            {profileSuccess && (
+              <Typography color="success.main" sx={{ mt: 2 }}>
+                {profileSuccess}
+              </Typography>
+            )}
             <Box display="flex" justifyContent="flex-end" mt={3}>
-              <Button variant="contained" color="primary">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={async () => {
+                  setProfileError("");
+                  setProfileSuccess("");
+                  if (
+                    !profile.nom.trim() ||
+                    !profile.prenom.trim() ||
+                    !profile.email.trim()
+                  ) {
+                    setProfileError(
+                      "Le nom, prénom et l'email sont obligatoires."
+                    );
+                    return;
+                  }
+                  // Vérification du format de l'email
+                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  if (!emailRegex.test(profile.email)) {
+                    setProfileError("L'adresse mail n'est pas valide.");
+                    return;
+                  }
+                  try {
+                    const res = await fetch(`${apiUrl}/api/auth/profile`, {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem(
+                          "token"
+                        )}`,
+                      },
+                      body: JSON.stringify({
+                        prenom: profile.prenom,
+                        nom: profile.nom,
+                        email: profile.email,
+                      }),
+                    });
+                    if (res.status === 200) {
+                      const data = await res.json();
+                      // Mets à jour le localStorage si besoin
+                      localStorage.setItem("user", JSON.stringify(data.user));
+                      setProfileSuccess("Profil mis à jour !");
+                    } else {
+                      const data = await res.json();
+                      setProfileError(
+                        data.message || "Erreur lors de la mise à jour"
+                      );
+                    }
+                  } catch (err) {
+                    setProfileError("Erreur réseau");
+                  }
+                }}
+              >
                 Enregistrer
               </Button>
             </Box>
