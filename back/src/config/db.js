@@ -2,11 +2,14 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI, {
+        // Configuration pour MongoDB local avec la base de données POC_IA
+        const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/POC_IA';
+        
+        await mongoose.connect(mongoURI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
-        console.log('MongoDB connected successfully');
+        console.log('MongoDB connected successfully to POC_IA database');
     } catch (error) {
         console.error('MongoDB connection error:', error.message);
         process.exit(1);
