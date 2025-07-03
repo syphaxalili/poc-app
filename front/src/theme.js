@@ -9,6 +9,14 @@ const theme = createTheme({
       main: "#f50057",
     },
   },
+  typography: {
+    fontFamily: [
+      "Inter", // ou "Roboto", "Arial", etc.
+      "Helvetica",
+      "Arial",
+      "sans-serif",
+    ].join(","),
+  },
 });
 
 export default theme;
