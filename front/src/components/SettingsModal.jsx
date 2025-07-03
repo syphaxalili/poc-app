@@ -11,7 +11,11 @@ import {
   Typography,
   Link,
   Divider,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 export default function SettingsModal({
   open,
@@ -35,6 +39,9 @@ export default function SettingsModal({
   const [showAddModel, setShowAddModel] = useState(false);
   const [newModel, setNewModel] = useState({ name: "", company: "" });
   const [customModels, setCustomModels] = useState([]);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Construit la liste des modèles activés
@@ -144,11 +151,43 @@ export default function SettingsModal({
                 color="error"
                 underline="hover"
                 sx={{ fontWeight: "bold", cursor: "pointer" }}
-                onClick={() => alert("Suppression du compte")}
+                onClick={() => setConfirmDeleteOpen(true)}
               >
                 Supprimer mon compte
               </Link>
             </Box>
+            {/* Popup de confirmation */}
+            <Dialog
+              open={confirmDeleteOpen}
+              onClose={() => setConfirmDeleteOpen(false)}
+            >
+              <DialogTitle>Confirmer la suppression</DialogTitle>
+              <DialogContent>
+                <DialogContentText>
+                  Êtes-vous sûr de vouloir supprimer votre compte ? Cette action
+                  est irréversible.
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  onClick={() => setConfirmDeleteOpen(false)}
+                  color="primary"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={() => {
+                    // Ajoute ici la logique de suppression réelle si besoin
+                    setConfirmDeleteOpen(false);
+                    navigate("/login");
+                  }}
+                  color="error"
+                  variant="contained"
+                >
+                  Supprimer
+                </Button>
+              </DialogActions>
+            </Dialog>
           </form>
         )}
         {tab === 1 && (
