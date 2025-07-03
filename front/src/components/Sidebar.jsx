@@ -74,7 +74,7 @@ export default function Sidebar({
                 <ListItemIcon>
                   <HomeIcon color="primary" />
                 </ListItemIcon>
-                <ListItemText primary="Accueil" />
+                <ListItemText primary="Nouveau chat" />
               </ListItem>
               <ListItem
                 button
@@ -104,27 +104,31 @@ export default function Sidebar({
               Historique des chats
             </Typography>
             <List>
-              {documents.map((doc, idx) => (
-                <ListItem
-                  button
-                  key={doc.name}
-                  selected={selectedDocIdx === idx}
-                  onClick={() => setSelectedDocIdx(idx)}
-                  sx={{
-                    borderRadius: 1,
-                    mx: 1,
-                    mb: 0.5,
-                    cursor: "pointer",
-                  }}
-                >
-                  <ListItemText
-                    primary={doc.name}
-                    secondary={doc.date}
-                    primaryTypographyProps={{ fontSize: 15 }}
-                    secondaryTypographyProps={{ fontSize: 12, color: "#aaa" }}
-                  />
-                </ListItem>
-              ))}
+              {[...documents].reverse().map((doc, idx) => {
+                // Pour garder la sélection correcte, adapte l'index :
+                const realIdx = documents.length - 1 - idx;
+                return (
+                  <ListItem
+                    button
+                    key={doc.name + doc.date}
+                    selected={selectedDocIdx === realIdx}
+                    onClick={() => setSelectedDocIdx(realIdx)}
+                    sx={{
+                      borderRadius: 1,
+                      mx: 1,
+                      mb: 0.5,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <ListItemText
+                      primary={doc.name}
+                      secondary={doc.date}
+                      primaryTypographyProps={{ fontSize: 15 }}
+                      secondaryTypographyProps={{ fontSize: 12, color: "#aaa" }}
+                    />
+                  </ListItem>
+                );
+              })}
             </List>
           </div>
         </Box>
