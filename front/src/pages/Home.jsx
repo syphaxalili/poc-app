@@ -58,7 +58,6 @@ export default function Home() {
     if (!chatStarted) setChatStarted(true);
 
     const now = new Date();
-
     const fileForThisMessage = selectedFile;
     const textForThisMessage = input;
 
@@ -81,31 +80,64 @@ export default function Home() {
 
     setLoading(true);
 
-    // Upload du fichier si présent
     let uploadedFile = null;
-    if (fileForThisMessage) {
-      try {
+    let iaResponse = null;
+    try {
+      if (fileForThisMessage) {
         uploadedFile = await uploadPdf(fileForThisMessage);
-      } catch (error) {
-        console.error("Erreur lors de l'upload du fichier :", error);
-        setLoading(false);
-        return;
       }
+
+      if (uploadedFile) {
+        const res = await fetch(`${apiUrl}/api/chat/ask`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            fileId: uploadedFile.id,
+            userPrompt: textForThisMessage || undefined,
+          }),
+        });
+
+        if (res.status === 200) {
+          const data = await res.json();
+          iaResponse = data.chat;
+        } else {
+          const error = await res.json();
+          throw new Error(error.message || "Erreur IA");
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'upload ou du traitement IA :", error);
+      setLoading(false);
+      return;
     }
 
+    // 3. Affichage de la réponse IA
     setTimeout(() => {
-      const lastUserMsg = newMessages[newMessages.length - 1];
-      const iaMsg = {
-        sender: "ia",
-        content: lastUserMsg.file
-          ? `Résumé généré pour le fichier **${lastUserMsg.file.name}** :\n\n- Point clé 1\n- Point clé 2\n\nSuggestions :\n- Action 1\n- Action 2`
-          : "Voici la réponse de l'IA à votre question.",
-        time: new Date(),
-      };
+      let iaMsg;
+      if (iaResponse) {
+        iaMsg = {
+          sender: "ia",
+          content: `**Résumé :**\n${
+            iaResponse.summary
+          }\n\n**Points clés :**\n- ${iaResponse.keyPoints?.join(
+            "\n- "
+          )}\n\n**Suggestions :**\n- ${iaResponse.suggestions?.join("\n- ")}`,
+          time: new Date(),
+        };
+      } else {
+        iaMsg = {
+          sender: "ia",
+          content: "Voici la réponse de l'IA à votre question.",
+          time: new Date(),
+        };
+      }
       const updatedMessages = [...newMessages, iaMsg];
       setMessages(updatedMessages);
 
-      // Sauvegarde dans l'historique si c'est un nouveau chat
+      // Historique (optionnel, adapte selon ton code)
       if (!chatStarted) {
         setChatHistory([
           ...chatHistory,
@@ -117,7 +149,6 @@ export default function Home() {
           },
         ]);
       } else {
-        // Met à jour le chat courant dans l'historique
         setChatHistory((prev) =>
           prev.map((chat, idx) =>
             idx === selectedDocIdx
@@ -128,7 +159,7 @@ export default function Home() {
       }
 
       setLoading(false);
-    }, 1800);
+    }, 300); // tu peux ajuster le délai si besoin
   };
 
   const handleInputKeyDown = (e) => {
