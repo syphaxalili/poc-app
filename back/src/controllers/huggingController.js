@@ -3,8 +3,7 @@ const path = require("path");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
 
-const HuggingFaceService = require("../services/HuggingFaceService");
-const hfService = new HuggingFaceService(process.env.HF_API_TOKEN);
+const { summarizeWithMistral } = require('../services/HuggingFaceService');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -41,14 +40,14 @@ exports.handleUploadAndProcess = async (req, res) => {
     const prompt = `
 Voici le contenu d'un document. Merci de me fournir un résumé structuré clair avec :
 - Les points clés
-- Les suggestions d’actions
+- Les suggestions d'actions
 - Un résumé bref en quelques phrases
 
 Texte :
 ${fullText}
 `;
 
-    const summary = await hfService.sendPrompt(prompt);
+    const summary = summarizeWithMistral(prompt);
 
     res.status(200).json({
       message: "Fichier reçu, traité et résumé généré",
