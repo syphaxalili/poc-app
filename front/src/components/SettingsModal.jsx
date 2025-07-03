@@ -198,10 +198,29 @@ export default function SettingsModal({
                   Annuler
                 </Button>
                 <Button
-                  onClick={() => {
-                    // Ajoute ici la logique de suppression réelle si besoin
-                    setConfirmDeleteOpen(false);
-                    navigate("/login");
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`${apiUrl}/api/auth/account`, {
+                        method: "DELETE",
+                        headers: {
+                          Authorization: `Bearer ${localStorage.getItem(
+                            "token"
+                          )}`,
+                        },
+                      });
+                      if (res.status === 200) {
+                        // Déconnexion et redirection
+                        localStorage.removeItem("token");
+                        localStorage.removeItem("user");
+                        setConfirmDeleteOpen(false);
+                        navigate("/login");
+                      } else {
+                        const data = await res.json();
+                        alert(data.message || "Erreur lors de la suppression");
+                      }
+                    } catch (err) {
+                      alert("Erreur réseau");
+                    }
                   }}
                   color="error"
                   variant="contained"
