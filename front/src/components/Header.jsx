@@ -1,4 +1,11 @@
-import { AppBar, Toolbar, Box, Avatar, Typography, Button } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  Box,
+  Avatar,
+  Typography,
+  Button,
+} from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 
 export default function Header({ userName, handleLogout }) {
