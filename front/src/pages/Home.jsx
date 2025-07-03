@@ -166,6 +166,7 @@ export default function Home() {
         onClose={() => setSettingsOpen(false)}
         onModelsChange={setActiveModels}
         activeModels={activeModels}
+        user={user}
       />
       <Box
         component="main"

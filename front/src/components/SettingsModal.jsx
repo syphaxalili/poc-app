@@ -22,13 +22,9 @@ export default function SettingsModal({
   onClose,
   isAdmin = true,
   onModelsChange,
+  user,
 }) {
   // Exemple de données pré-remplies (remplace par des props ou du contexte si besoin)
-  const [profile, setProfile] = useState({
-    nom: "Dupont",
-    prenom: "Jean",
-    email: "jean.dupont@email.com",
-  });
   const [models, setModels] = useState({ gpt4: true, dalle: false });
   const [tab, setTab] = useState(0);
 
@@ -42,6 +38,22 @@ export default function SettingsModal({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const navigate = useNavigate();
+
+  // Prend les valeurs du user si dispo, sinon valeurs par défaut
+  const [profile, setProfile] = useState({
+    nom: user?.nom || "",
+    prenom: user?.prenom || "",
+    email: user?.email || "",
+  });
+
+  // Synchronise le state si le user change (ex : ouverture/fermeture du modal)
+  useEffect(() => {
+    setProfile({
+      nom: user?.nom || "",
+      prenom: user?.prenom || "",
+      email: user?.email || "",
+    });
+  }, [user, open]);
 
   useEffect(() => {
     // Construit la liste des modèles activés
@@ -96,6 +108,7 @@ export default function SettingsModal({
               fullWidth
               margin="normal"
               type="email"
+              disabled
             />
             <Box mt={2}>
               {!showPasswordField ? (
