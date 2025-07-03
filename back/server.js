@@ -12,10 +12,12 @@ app.use(cors());
 const authRoutes = require("./src/routes/authRoutes");
 const fileRoutes = require("./src/routes/fileRoutes");
 const huggingRoutes = require("./src/routes/huggingRoutes");
+const chatRoutes = require("./src/routes/chatRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/file", fileRoutes);
-app.use("/api", huggingRoutes);
+// app.use("/api", huggingRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Connexion à la base de données et démarrage du serveur
 const startServer = async () => {

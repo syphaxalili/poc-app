@@ -1,35 +1,39 @@
-class HuggingFaceService {
-  constructor() {
-    this.apiToken = process.env.API_TOKEN;
-    this.apiUrl =
-      "https://api-inference.huggingface.co/models/sshleifer/distilbart-cnn-12-6";
-  }
+const { InferenceClient } = require("@huggingface/inference");
 
-  async sendPrompt(text) {
-    try {
-      const response = await fetch(this.apiUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.apiToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ inputs: text }),
-      });
+const HF_API_TOKEN = process.env.HF_API_TOKEN;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Erreur API Hugging Face: ${response.status} - ${errorText}`
-        );
-      }
+const client = new InferenceClient(HF_API_TOKEN);
 
-      const data = await response.json();
-      return data[0].summary_text || "";
-    } catch (error) {
-      console.error("Erreur HuggingFaceService:", error.message);
-      throw error;
-    }
-  }
+exports.summarizeWithMistral = async (text) => {
+  const chatCompletion = await client.chatCompletion({
+    provider: "featherless-ai",
+    model: "mistralai/Mistral-7B-Instruct-v0.2",
+    messages: [
+      {
+        role: "user",
+        content: `
+Tu es un assistant IA. Résume le texte suivant en français, donne les points clés et propose des suggestions d'actions.
+Texte :
+${text}
+Réponds au format JSON :
+{
+  "resume": "...",
+  "points_cles": ["...", "..."],
+  "suggestions": ["...", "..."]
 }
+        `,
+      },
+    ],
+  });
 
-module.exports = HuggingFaceService;
+  // On suppose que le modèle répond bien au format JSON demandé
+  const output = chatCompletion.choices[0].message.content;
+  try {
+    const jsonStart = output.indexOf('{');
+    const jsonEnd = output.lastIndexOf('}');
+    const jsonString = output.substring(jsonStart, jsonEnd + 1);
+    return JSON.parse(jsonString);
+  } catch (e) {
+    throw new Error("La réponse du modèle n'est pas au format JSON attendu : " + output);
+  }
+};

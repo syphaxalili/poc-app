@@ -1,52 +1,59 @@
-const fs = require("fs");
-const path = require("path");
-const multer = require("multer");
-const pdfParse = require("pdf-parse");
+const File = require('../models/File');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
+// Crée le dossier uploads s'il n'existe pas
+const uploadDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configuration de multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = "./src/uploads";
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    cb(null, dir);
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
-  },
+    const uniqueName = Date.now() + '-' + file.originalname.replace(/\s+/g, '_');
+    cb(null, uniqueName);
+  }
+});
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype !== 'application/pdf') {
+      return cb(new Error('Seuls les fichiers PDF sont autorisés'), false);
+    }
+    cb(null, true);
+  }
 });
 
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype === "application/pdf") cb(null, true);
-  else cb(new Error("Seuls les fichiers PDF sont acceptés"), false);
-};
+// Middleware pour l'upload (à utiliser dans la route)
+exports.uploadMiddleware = upload.single('pdf');
 
-exports.upload = multer({ storage, fileFilter }).single("document");
-
-exports.handleUploadAndProcess = async (req, res) => {
+// Contrôleur pour enregistrer le fichier en base
+exports.uploadFile = async (req, res) => {
   try {
-    if (!req.file)
-      return res.status(400).json({ message: "Aucun fichier envoyé" });
+    if (!req.file) return res.status(400).json({ message: 'Aucun fichier envoyé' });
 
-    const filePath = path.resolve(req.file.path);
-    const dataBuffer = fs.readFileSync(filePath);
+    const file = await File.create({
+      filename: req.file.filename,
+      originalname: req.file.originalname,
+      path: req.file.path,
+      user: req.user.id
+    });
 
-    // Lire le contenu du PDF
-    const parsed = await pdfParse(dataBuffer);
-
-    console.log(
-      `Contenu extrait du fichier ${req.file.filename} :`,
-      parsed.text.slice(0, 200)
-    );
-
-    res.status(200).json({
-      message: "Fichier reçu et traité avec succès",
-      file: req.file.filename,
-      textPreview: parsed.text.slice(0, 200),
+    res.status(201).json({
+      message: 'Fichier uploadé avec succès',
+      file: {
+        id: file._id,
+        filename: file.filename,
+        originalname: file.originalname,
+        uploadedAt: file.uploadedAt
+      }
     });
   } catch (err) {
-    res.status(500).json({
-      message: "Erreur lors du traitement du PDF",
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Erreur lors de l\'upload', error: err.message });
   }
 };
