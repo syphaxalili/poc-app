@@ -8,11 +8,9 @@ import {
   Divider,
   Typography,
   Box,
-  Button,
 } from "@mui/material";
-import HomeIcon from "@mui/icons-material/Home";
 import SettingsIcon from "@mui/icons-material/Settings";
-import React from "react";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 
 const drawerWidth = 240;
 
@@ -72,7 +70,7 @@ export default function Sidebar({
                 }}
               >
                 <ListItemIcon>
-                  <HomeIcon color="primary" />
+                  <RocketLaunchIcon color="primary" />
                 </ListItemIcon>
                 <ListItemText primary="Nouveau chat" />
               </ListItem>

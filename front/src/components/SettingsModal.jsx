@@ -17,6 +17,8 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { apiUrl } from "../config";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
 export default function SettingsModal({
   open,
@@ -85,7 +87,22 @@ export default function SettingsModal({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth>
-      <DialogTitle>Paramètres</DialogTitle>
+      <DialogTitle sx={{ m: 0, p: 2, pr: 5, position: "relative" }}>
+        Paramètres
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+          size="large"
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
       <Tabs value={tab} onChange={(_, v) => setTab(v)}>
         <Tab label="Profil" />
         <Tab label="Modèles IA" />
@@ -213,9 +230,12 @@ export default function SettingsModal({
                     });
                     if (res.status === 200) {
                       const data = await res.json();
-                      // Mets à jour le localStorage si besoin
                       localStorage.setItem("user", JSON.stringify(data.user));
                       setProfileSuccess("Profil mis à jour !");
+                      setTimeout(() => {
+                        setProfileSuccess("");
+                        onClose();
+                      }, 1000);
                     } else {
                       const data = await res.json();
                       setProfileError(
