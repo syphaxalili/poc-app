@@ -15,6 +15,7 @@ import Header from "../components/Header";
 import ChatMessages from "../components/ChatMessages";
 import ChatInput from "../components/ChatInput";
 import SettingsModal from "../components/SettingsModal";
+import { apiUrl } from "../config";
 
 const IA_AVATAR = "🤖";
 const USER_AVATAR = "🧑";
@@ -80,6 +81,18 @@ export default function Home() {
 
     setLoading(true);
 
+    // Upload du fichier si présent
+    let uploadedFile = null;
+    if (fileForThisMessage) {
+      try {
+        uploadedFile = await uploadPdf(fileForThisMessage);
+      } catch (error) {
+        console.error("Erreur lors de l'upload du fichier :", error);
+        setLoading(false);
+        return;
+      }
+    }
+
     setTimeout(() => {
       const lastUserMsg = newMessages[newMessages.length - 1];
       const iaMsg = {
@@ -135,6 +148,30 @@ export default function Home() {
       fileInputRef.current.value = "";
     }
   };
+
+  // À placer dans ton composant parent (ex: Home.jsx)
+  // Appelle cette fonction dans handleSend si selectedFile existe
+
+  async function uploadPdf(file) {
+    const formData = new FormData();
+    formData.append("pdf", file);
+
+    const res = await fetch(`${apiUrl}/api/file/upload`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formData,
+    });
+
+    if (res.status === 201) {
+      const data = await res.json();
+      return data.file; // infos du fichier uploadé
+    } else {
+      const error = await res.json();
+      throw new Error(error.message || "Erreur lors de l'upload");
+    }
+  }
 
   return (
     <Box
