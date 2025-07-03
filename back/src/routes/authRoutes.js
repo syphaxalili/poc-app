@@ -24,8 +24,6 @@ router.put('/profile', authMiddleware(), updateProfile);
 router.put('/change-password', authMiddleware(), changePassword);
 router.delete('/account', authMiddleware(), deleteAccount);
 
-// Routes admin (optionnelles - pour la gestion des utilisateurs)
-router.get('/users', authMiddleware(), getAllUsers);
-router.get('/users/:id', authMiddleware(), getUserById);
+
 
 module.exports = router;
